@@ -2,6 +2,7 @@ import numpy as np
 from timeit import default_timer as timer
 import matplotlib.pylab as plt 
 import pandas as pd
+from fancyimpute import SoftImpute
 
 def selecting_most_populated_columns(dataset):
     return dataset[['acoq', 'actq', 'ancq', 'aoq', 'apq', 'atq', 'capsq', 'ceqq', 'cheq',
@@ -31,12 +32,14 @@ def drop_rows_with_half_missing_values(dataset):
     return dataset.loc[row_with_more_values_filled]
     
 
-def drop_rows_where_SALEQ_ATQ_missing():
+def drop_rows_where_SALEQ_ATQ_missing(dataset):
+    """
     data = [['a1', 'a2', np.nan],
         ['a2', 'b2', 'c2'],
         ['a3', np.nan, 'c3'], 
         [np.nan, 'b4', 'c4']]
     dataset = pd.DataFrame(data, columns=['acoq', 'saleq', 'atq'])
+    """
     filt = (dataset['saleq'].notna())
     dataset = dataset.loc[filt]
     filt2 = (dataset['atq'].notna())
@@ -44,12 +47,21 @@ def drop_rows_where_SALEQ_ATQ_missing():
 
 
 def imputation_softimpute(dataset):
-    pass
+    #Need to do imputation for quarter with only information from prior quarters
+    return SoftImpute().fit_transform(dataset)
 
 def drop_rows_where_SALEQ_ATQ_zero(dataset):
-    pass
+    filt = (dataset['saleq'] == 0)
+    dataset = dataset.loc[filt]
+    filt2 = (dataset['atq'] == 0)
+    return dataset.loc[filt2]
 
 def exclude_quarters_with_no_accouncement_date(dataset):
+    # Excluding quarters where YQ−0 has no announcement date and limiting the data to events between 1991 and 2017
     pass
 
-print(drop_rows_where_SALEQ_ATQ_missing())
+def normalize_data():
+    # Normalize balance sheet data by total assests and income and cash flow data by total sales
+    # https://stackoverflow.com/questions/28576540/how-can-i-normalize-the-data-in-a-range-of-columns-in-my-pandas-dataframe
+    pass
+
