@@ -14,6 +14,27 @@ from clean_data import selecting_most_populated_columns, drop_rows_with_half_mis
 parser = argparse.ArgumentParser(description='Machine Learning-Based Financial Statement Analysis')
 parser.add_argument('--config', default='./configs/config.yaml')
 
+def train(epochs, data_loader, model, optimizer, criterion):
+    for epoch in range(epochs):
+        for idx, (data, target) in enumerate(data_loader):
+            #start = time.time()
+            if torch.cuda.is_available():
+                data = data.cuda()
+                target = target.cuda()
+
+            out = model.forward(data)
+            loss = criterion(out, target)
+
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+
+            if (idx+1) % 100 == 0:
+                print (f'Epoch [{epoch+1}/{epochs}], Step [{idx+1}/{len(data_loader)}], Loss: {loss.item():.4f}')
+
+def validate(epochs, data_loader, model, criterion):
+    pass
+
 def main():
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -26,6 +47,10 @@ def main():
     for key in config:
         for k, v in config[key].items():
             setattr(args, k, v)
+
+    #Set batch_size and epochs
+    num_epochs = args.epoch
+    batch_size = args.batch_size
 
     #Load data
     #dataset = pd.read_csv('data/cleaned_data.csv')
@@ -54,6 +79,10 @@ def main():
         optimizer = torch.optim.RMSProp(model.parameters(), lr=args.learning_rate) 
 
     #Train the model
+    train(num_epochs, data_loader, model, optimizer, criterion)
+
+    #Validate the model
+
 
 
 
