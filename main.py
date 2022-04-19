@@ -1,3 +1,8 @@
+import yaml
+import argparse
+import time
+import copy
+
 import numpy as np
 import pandas as pd
 import torch
@@ -5,6 +10,9 @@ import torch.nn as nn
 
 from models import DNN, RNN, RandomForest
 from clean_data import selecting_most_populated_columns, drop_rows_with_half_missing_values, drop_rows_where_SALEQ_ATQ_missing, imputation_softimpute, drop_rows_where_SALEQ_ATQ_zero, exclude_quarters_with_no_accouncement_date, normalize_data
+
+parser = argparse.ArgumentParser(description='Machine Learning-Based Financial Statement Analysis')
+parser.add_argument('--config', default='./config.yaml')
 
 def main():
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -20,7 +28,7 @@ def main():
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)  
 
     #Train the model
-    
+
 
 
 if __name__ == "__main__":
