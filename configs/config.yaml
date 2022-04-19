@@ -3,16 +3,13 @@ Train:
   learning_rate: 0.01
   reg: 0
   epochs: 30
-  steps: [4000, 25000]
-  warmup: 0
-  momentum: 0.9
 
 network:
-  model: MyModel # TwoLayerNet or VanillaCNN or MyModel or ResNet-32
+  model: RNN # DNN or RNN or RandomForest
 
-data:
-  imbalance: regular # regular or imbalance
-  save_best: True
 
 loss:
-  loss_type: CE # CE or Focal
+  loss_type: MSE # MSE or MAE
+
+optimizer:
+  optimizer_type: Adam # Adam or RMSProp
