@@ -16,8 +16,8 @@ parser = argparse.ArgumentParser(description='Machine Learning-Based Financial S
 parser.add_argument('--config', default='./configs/config.yaml')
 
 class QuarterlyFundamentalData(Dataset):
-    def __init__(self):
-        dataset = np.loadtxt('data/cleaned_data.csv', delimiter=",", skiprows=1)
+    def __init__(self, filename):
+        dataset = np.loadtxt(filename, delimiter=",", skiprows=1)
         self.x = torch.from_numpy(dataset[:, 1:]) # Skip the column that is the target
         self.y = torch.from_numpy(dataset[:, [0]]) # Size = (n_samples, 1)
         self.num_samples = dataset.shape[0]
@@ -78,8 +78,14 @@ def main():
 
     #Load data
     #dataset = pd.read_csv('data/cleaned_data.csv')
-    dataset = QuarterlyFundamentalData()
-    data_loader = DataLoader(dataset=dataset, batch_size= batch_size, shuffle=True, num_workers=2) # num_workers uses multiple subprocesses
+    train_set_filename = 'data/cleaned_data.csv'
+    val_set_filename = ''
+    train_dataset = QuarterlyFundamentalData(train_set_filename)
+    data_loader = DataLoader(dataset=train_dataset, batch_size= batch_size, shuffle=True, num_workers=2) # num_workers uses multiple subprocesses
+
+    val_dataset = QuarterlyFundamentalData(val_set_filename)
+    val_loader = DataLoader(dataset=val_dataset, batch_size= batch_size, shuffle=False, num_workers=2) # num_workers uses multiple subprocesses
+
 
     #Set up model
     
