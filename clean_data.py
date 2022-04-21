@@ -5,7 +5,7 @@ import pandas as pd
 from fancyimpute import SoftImpute
 
 def selecting_most_populated_columns(dataset):
-    return dataset[['acoq', 'actq', 'ancq', 'aoq', 'apq', 'atq', 'capsq', 'ceqq', 'cheq',
+    return dataset[['tic', 'datadate', 'acoq', 'actq', 'ancq', 'aoq', 'apq', 'atq', 'capsq', 'ceqq', 'cheq',
         'csh12q', 'cshoq', 'cshprq', 'cshpry', 'cstkq', 'dlcq', 'dlttq',
         'dpactq', 'icaptq', 'invtq', 'lcoq', 'lctq', 'lltq', 'loq', 'lseq', 'ltmibq',
         'ltq', 'mibq', 'mibtq', 'ppegtq', 'ppentq', 'pstknq', 'pstkq',
@@ -65,8 +65,36 @@ def normalize_data():
     # https://stackoverflow.com/questions/28576540/how-can-i-normalize-the-data-in-a-range-of-columns-in-my-pandas-dataframe
     pass
 
-#dataset = pd.read_csv('data/fundamental_quarterly.csv')
+def minimize_stock_data_columns(stock_data):
+    return stock_data[['TICKER', 'date', 'PRC']]
+
+def drop_stock_nan_values(stock_data):
+    filt = (stock_data['TICKER'].notna())
+    stock_data = stock_data.loc[filt]
+    filt2 = (stock_data['PRC'].notna())
+    return stock_data.loc[filt2]
+
+def make_price_positive(stock_data):
+    stock_data['PRC'] = stock_data['PRC'].abs()
+    return stock_data
+
+def add_BHAR_column(stock_data):
+    stock_data['BHAR'] = 0
+    tickers = stock_data['TICKER'].unique()
+    for tic in tickers:
+        cond = stock_data['TICKER'] == tic
+        ticker_stock_data = stock_data.loc[cond]
+        stock_data.loc[cond, 'BHAR'] = ticker_stock_data['PRC'].pct_change(periods=1).shift(-1)
+    return stock_data
+    
+def add_target_column(dataset, stock_data):
+    pass
+
+
+#dataset = pd.read_csv('data/fundamental_quarterly.csv', nrows=5)
 #dataset = selecting_most_populated_columns(dataset)
+#print(dataset)
+
 #dataset.to_csv('data/most_populated_columns.csv', index=False)
 
 #dataset = pd.read_csv('data/most_populated_columns.csv')
@@ -92,3 +120,19 @@ def normalize_data():
 #dataset = normalize_data(dataset)
 
 #print(f'Number of rows: {dataset.shape[0]}, Number of columns: {dataset.shape[1]}')
+
+
+
+#Yahoo Finance Data
+
+#yahoo_stock_data = yf.download(dataset['tic'].unique().tolist(), start="1983-01-01", end="2017-12-31")
+#yahoo_stock_data.to_csv('data/yahoo_stock_data.csv', index=False)
+
+
+#CRSP data
+stock_data = pd.read_csv('data/crsp_data.csv', nrows = 20)
+stock_data = minimize_stock_data_columns(stock_data)
+stock_data = drop_stock_nan_values(stock_data)
+stock_data = make_price_positive(stock_data)
+stock_data = add_BHAR_column(stock_data)
+print(stock_data)

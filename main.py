@@ -81,7 +81,7 @@ def main():
     train_set_filename = 'data/cleaned_data.csv'
     val_set_filename = ''
     train_dataset = QuarterlyFundamentalData(train_set_filename)
-    data_loader = DataLoader(dataset=train_dataset, batch_size= batch_size, shuffle=True, num_workers=2) # num_workers uses multiple subprocesses
+    data_loader = DataLoader(dataset=train_dataset, batch_size= batch_size, shuffle=False, num_workers=2) # num_workers uses multiple subprocesses
 
     val_dataset = QuarterlyFundamentalData(val_set_filename)
     val_loader = DataLoader(dataset=val_dataset, batch_size= batch_size, shuffle=False, num_workers=2) # num_workers uses multiple subprocesses
