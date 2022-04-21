@@ -86,6 +86,10 @@ def add_BHAR_column(stock_data):
         ticker_stock_data = stock_data.loc[cond]
         stock_data.loc[cond, 'BHAR'] = ticker_stock_data['PRC'].pct_change(periods=1).shift(-1)
     return stock_data
+
+def drop_BHAR_nan_values(stock_data):
+    filt = (stock_data['BHAR'].notna())
+    return stock_data.loc[filt]
     
 def add_target_column(dataset, stock_data):
     pass
@@ -135,4 +139,5 @@ stock_data = minimize_stock_data_columns(stock_data)
 stock_data = drop_stock_nan_values(stock_data)
 stock_data = make_price_positive(stock_data)
 stock_data = add_BHAR_column(stock_data)
+stock_data = drop_BHAR_nan_values(stock_data)
 print(stock_data)
