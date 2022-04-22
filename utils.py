@@ -17,6 +17,9 @@ def split_train_test_data():
 
     train_data.to_csv('data/train_data.csv', index=False)
     val_data.to_csv('data/val_data.csv', index=False)
+
+def generate_batches(filename):
+    dataset = pd.read_csv('data/cleaned_data.csv')
     
 
 split_train_test_data()
