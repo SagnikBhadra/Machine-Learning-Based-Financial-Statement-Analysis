@@ -45,10 +45,20 @@ def drop_rows_where_SALEQ_ATQ_missing(dataset):
     filt2 = (dataset['atq'].notna())
     return dataset.loc[filt2]
 
+def drop_ticker_less_than_four_datapoints(dataset):
+    dataset =  dataset.groupby('tic').filter(lambda x : len(x)>3)
+    return dataset
 
 def imputation_softimpute(dataset):
+    non_int_columns = pd.DataFrame(dataset['tic'])
+    non_int_columns['datadate'] = dataset['datadate']
+    dataset = dataset.drop(['tic', 'datadate'], axis=1)
     #Need to do imputation for quarter with only information from prior quarters
-    return SoftImpute().fit_transform(dataset)
+    dataset = SoftImpute().fit_transform(dataset)
+    dataset = pd.DataFrame(dataset, columns=['acoq', 'actq', 'ancq', 'aoq', 'apq', 'atq', 'capsq', 'ceqq', 'cheq','csh12q', 'cshoq', 'cshprq', 'cshpry', 'cstkq', 'dlcq', 'dlttq', 'dpactq', 'icaptq', 'invtq', 'lcoq', 'lctq', 'lltq', 'loq', 'lseq', 'ltmibq','ltq', 'mibq', 'mibtq', 'ppegtq', 'ppentq', 'pstknq', 'pstkq','pstkrq', 'rectq', 'req', 'seqq', 'tstkq', 'txditcq', 'txpq', 'wcapq', 'aolochy', 'apalchy', 'aqcy', 'capxy', 'chechy', 'dltisy', 'dltry','dpcy', 'dvy', 'esubcy', 'exrey', 'fiaoy', 'fincfy', 'fopoy', 'ibcy','intpny', 'invchy', 'ivacoy', 'ivchy', 'ivncfy', 'ivstchy', 'oancfy', 'prstkcy', 'recchy', 'sivy', 'sppivy', 'sstky', 'txdcy', 'xidocy', 'acchgq', 'cogsq', 'cogsy', 'cstkeq', 'doq', 'doy', 'dpq', 'dpy', 'dvpq','dvpy', 'epsfiq', 'epsfiy', 'epsfxq', 'epsfxy', 'epspiq', 'epspiy','epspxq', 'epspxy', 'epsx12', 'ibadjq', 'ibadjy', 'ibcomq', 'ibq','iby', 'miiq', 'miiy', 'niq', 'niy', 'nopiq', 'nopiy', 'oiadpq', 'oiadpy','oibdpq', 'opepsq', 'piq', 'piy', 'revtq', 'revty', 'saleq', 'saley', 'spiq','spiy', 'txtq', 'txty', 'xidoq', 'xidoy', 'xintq', 'xiq', 'xiy', 'xoprq','xopry', 'xsgaq', 'PRC', 'BHAR'])
+    dataset.insert(loc = 0, column='tic', value=non_int_columns['tic'])
+    dataset.insert(loc = 1, column='datadate', value=non_int_columns['datadate'])
+    return dataset
 
 def drop_rows_where_SALEQ_ATQ_zero(dataset):
     filt = (dataset['saleq'] != 0)
@@ -58,12 +68,18 @@ def drop_rows_where_SALEQ_ATQ_zero(dataset):
 
 def exclude_quarters_with_no_accouncement_date(dataset):
     # Excluding quarters where YQ−0 has no announcement date and limiting the data to events between 1991 and 2017
-    pass
+    filt = (dataset['datadate'].notna())
+    return dataset.loc[filt]
 
-def normalize_data():
+def normalize_data(dataset):
     # Normalize balance sheet data by total assests and income and cash flow data by total sales
     # https://stackoverflow.com/questions/28576540/how-can-i-normalize-the-data-in-a-range-of-columns-in-my-pandas-dataframe
-    pass
+    cols_to_norm = ['acoq', 'actq', 'ancq', 'aoq', 'apq', 'atq', 'capsq', 'ceqq', 'cheq','csh12q', 'cshoq', 'cshprq', 'cshpry', 'cstkq', 'dlcq', 'dlttq', 'dpactq', 'icaptq', 'invtq', 'lcoq', 'lctq', 'lltq', 'loq', 'lseq', 'ltmibq','ltq', 'mibq', 'mibtq', 'ppegtq', 'ppentq', 'pstknq', 'pstkq','pstkrq', 'rectq', 'req', 'seqq', 'tstkq', 'txditcq', 'txpq', 'wcapq']
+    dataset[cols_to_norm] = dataset[cols_to_norm].apply(lambda row: row / row['atq'], axis=1)
+    
+    cols_to_norm = ['aolochy', 'apalchy', 'aqcy', 'capxy', 'chechy', 'dltisy', 'dltry','dpcy', 'dvy', 'esubcy', 'exrey', 'fiaoy', 'fincfy', 'fopoy', 'ibcy','intpny', 'invchy', 'ivacoy', 'ivchy', 'ivncfy', 'ivstchy', 'oancfy', 'prstkcy', 'recchy', 'sivy', 'sppivy', 'sstky', 'txdcy', 'xidocy', 'acchgq', 'cogsq', 'cogsy', 'cstkeq', 'doq', 'doy', 'dpq', 'dpy', 'dvpq','dvpy', 'epsfiq', 'epsfiy', 'epsfxq', 'epsfxy', 'epspiq', 'epspiy','epspxq', 'epspxy', 'epsx12', 'ibadjq', 'ibadjy', 'ibcomq', 'ibq','iby', 'miiq', 'miiy', 'niq', 'niy', 'nopiq', 'nopiy', 'oiadpq', 'oiadpy','oibdpq', 'opepsq', 'piq', 'piy', 'revtq', 'revty', 'saleq', 'saley', 'spiq','spiy', 'txtq', 'txty', 'xidoq', 'xidoy', 'xintq', 'xiq', 'xiy', 'xoprq','xopry', 'xsgaq']
+    dataset[cols_to_norm] = dataset[cols_to_norm].apply(lambda row: row / row['saleq'], axis=1)
+    return dataset
 
 def minimize_stock_data_columns(stock_data):
     return stock_data[['TICKER', 'date', 'PRC']]
@@ -89,16 +105,19 @@ def add_BHAR_column(stock_data):
 
 def drop_BHAR_nan_values(stock_data):
     filt = (stock_data['BHAR'].notna())
-    return stock_data.loc[filt]
+    stock_data = stock_data.loc[filt]
+    stock_data['BHAR'] = stock_data['BHAR'] - stock_data['sprtrn']
+    stock_data = stock_data.drop('sprtrn', axis=1)
+    return stock_data
     
 def add_target_column(dataset, stock_data):
-    pass
+    stock_data = stock_data.rename(columns={"TICKER": "tic", "date": "datadate"})
+    dataset = pd.merge(dataset, stock_data, on=['tic', 'datadate'])
+    return dataset
 
-
+#Fundamental Data
 #dataset = pd.read_csv('data/fundamental_quarterly.csv', nrows=5)
 #dataset = selecting_most_populated_columns(dataset)
-#print(dataset)
-
 #dataset.to_csv('data/most_populated_columns.csv', index=False)
 
 #dataset = pd.read_csv('data/most_populated_columns.csv')
@@ -109,9 +128,25 @@ def add_target_column(dataset, stock_data):
 #dataset = drop_rows_where_SALEQ_ATQ_missing(dataset)
 #dataset.to_csv('data/rows_SALEQ_ATQ_filled.csv', index=False)
 
+#CRSP data
+#stock_data = pd.read_csv('data/crsp_data.csv', nrows = 20)
+#stock_data = minimize_stock_data_columns(stock_data)
+#stock_data = drop_stock_nan_values(stock_data)
+#stock_data = make_price_positive(stock_data)
+#stock_data = add_BHAR_column(stock_data)
+#stock_data = drop_BHAR_nan_values(stock_data)
 #dataset = pd.read_csv('data/rows_SALEQ_ATQ_filled.csv')
-#softimpute_np_arr = imputation_softimpute(dataset)
-#dataset = pd.DataFrame(softimpute_np_arr, columns=['acoq', 'actq', 'ancq', 'aoq', 'apq', 'atq', 'capsq', 'ceqq', 'cheq','csh12q', 'cshoq', 'cshprq', 'cshpry', 'cstkq', 'dlcq', 'dlttq', 'dpactq', 'icaptq', 'invtq', 'lcoq', 'lctq', 'lltq', 'loq', 'lseq', 'ltmibq','ltq', 'mibq', 'mibtq', 'ppegtq', 'ppentq', 'pstknq', 'pstkq','pstkrq', 'rectq', 'req', 'seqq', 'tstkq', 'txditcq', 'txpq', 'wcapq', 'aolochy', 'apalchy', 'aqcy', 'capxy', 'chechy', 'dltisy', 'dltry','dpcy', 'dvy', 'esubcy', 'exrey', 'fiaoy', 'fincfy', 'fopoy', 'ibcy','intpny', 'invchy', 'ivacoy', 'ivchy', 'ivncfy', 'ivstchy', 'oancfy', 'prstkcy', 'recchy', 'sivy', 'sppivy', 'sstky', 'txdcy', 'xidocy', 'acchgq', 'cogsq', 'cogsy', 'cstkeq', 'doq', 'doy', 'dpq', 'dpy', 'dvpq','dvpy', 'epsfiq', 'epsfiy', 'epsfxq', 'epsfxy', 'epspiq', 'epspiy','epspxq', 'epspxy', 'epsx12', 'ibadjq', 'ibadjy', 'ibcomq', 'ibq','iby', 'miiq', 'miiy', 'niq', 'niy', 'nopiq', 'nopiy', 'oiadpq', 'oiadpy','oibdpq', 'opepsq', 'piq', 'piy', 'revtq', 'revty', 'saleq', 'saley', 'spiq','spiy', 'txtq', 'txty', 'xidoq', 'xidoy', 'xintq', 'xiq', 'xiy', 'xoprq','xopry', 'xsgaq'])
+#dataset = add_target_column(dataset, stock_data)
+#dataset.to_csv('data/combined_data.csv', index=False)
+
+#Combined Data
+
+#dataset = pd.read_csv('data/combined_data.csv')
+#dataset = drop_ticker_less_than_four_datapoints(dataset)
+#dataset.to_csv('data/tickers_with_sufficient_datapoints.csv', index=False)
+
+#dataset = pd.read_csv('data/tickers_with_sufficient_datapoints.csv')
+#dataset = imputation_softimpute(dataset)
 #dataset.to_csv('data/softimpute.csv', index=False)
 #percent_missing = dataset.isnull().sum() * 100 / len(dataset)
 #print(f'Percent Missing: {percent_missing}')
@@ -127,17 +162,3 @@ def add_target_column(dataset, stock_data):
 
 
 
-#Yahoo Finance Data
-
-#yahoo_stock_data = yf.download(dataset['tic'].unique().tolist(), start="1983-01-01", end="2017-12-31")
-#yahoo_stock_data.to_csv('data/yahoo_stock_data.csv', index=False)
-
-
-#CRSP data
-stock_data = pd.read_csv('data/crsp_data.csv', nrows = 20)
-stock_data = minimize_stock_data_columns(stock_data)
-stock_data = drop_stock_nan_values(stock_data)
-stock_data = make_price_positive(stock_data)
-stock_data = add_BHAR_column(stock_data)
-stock_data = drop_BHAR_nan_values(stock_data)
-print(stock_data)
