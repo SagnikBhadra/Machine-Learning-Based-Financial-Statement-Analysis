@@ -5,7 +5,7 @@ Train:
   epochs: 30
 
 network:
-  model: RNN # DNN or RNN or RandomForest
+  model: RNN # DNN or RNN or RandomForest or LASSO or OLS
 
 
 loss:

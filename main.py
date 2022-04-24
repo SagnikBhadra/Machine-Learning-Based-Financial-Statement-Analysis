@@ -9,8 +9,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 
-import models.dnn, models.rnn, models.random_regression_forest
-from clean_data import selecting_most_populated_columns, drop_rows_with_half_missing_values, drop_rows_where_SALEQ_ATQ_missing, imputation_softimpute, drop_rows_where_SALEQ_ATQ_zero, exclude_quarters_with_no_accouncement_date, normalize_data
+import models.dnn, models.rnn, models.random_regression_forest, models.LASSO, models.OLS
 
 parser = argparse.ArgumentParser(description='Machine Learning-Based Financial Statement Analysis')
 parser.add_argument('--config', default='./configs/config.yaml')
@@ -145,20 +144,11 @@ def main():
         for k, v in config[key].items():
             setattr(args, k, v)
 
-    #Set batch_size and epochs
+    #Set batch_size and epochs and filenames
     num_epochs = args.epoch
     batch_size = args.batch_size
-
-    #Load data
-    #dataset = pd.read_csv('data/cleaned_data.csv')
-    train_set_filename = 'data/cleaned_data.csv'
-    val_set_filename = ''
-    train_dataset = QuarterlyFundamentalData(train_set_filename)
-    data_loader = DataLoader(dataset=train_dataset, batch_size= batch_size, shuffle=False, num_workers=2) # num_workers uses multiple subprocesses
-
-    val_dataset = QuarterlyFundamentalData(val_set_filename)
-    val_loader = DataLoader(dataset=val_dataset, batch_size= batch_size, shuffle=False, num_workers=2) # num_workers uses multiple subprocesses
-
+    train_set_filename = 'data/batched_train_data.csv'
+    val_set_filename = 'data/batched_val_data.csv'
 
     #Set up model
     
@@ -167,10 +157,28 @@ def main():
         print("DNN")
     elif args.model == 'RNN':
         model = models.rnn.RNN(device).to(device)
+        train_set_filename = 'data/batched_rnn_train_data.csv'
+        val_set_filename = 'data/batch_rnn_val_data.csv'
         print("RNN")
     elif args.model == 'RandomForest':
         model = models.random_regression_forest.RandomForest().to(device)
         print("RandomForest")
+    elif args.model == 'LASSO':
+        model = models.LASSO.LASSO().to(device)
+        print("LASSO")
+    elif args.model == 'OLS':
+        model = models.OLS.OLS().to(device)
+        print("OLS")
+
+    #Load data
+    #dataset = pd.read_csv('data/cleaned_data.csv')
+    
+    train_dataset = QuarterlyFundamentalData(train_set_filename)
+    data_loader = DataLoader(dataset=train_dataset, batch_size= batch_size, shuffle=False, num_workers=2) # num_workers uses multiple subprocesses
+
+    val_dataset = QuarterlyFundamentalData(val_set_filename)
+    val_loader = DataLoader(dataset=val_dataset, batch_size= batch_size, shuffle=False, num_workers=2) # num_workers uses multiple subprocesses
+
     
     #Initialize loss and optimizer
     if args.loss_type == 'MSE':

@@ -1,8 +1,8 @@
 from sklearn.linear_model import LinearRegression
 
-class LASSO(nn.Module):
+class OLS(nn.Module):
     def __init__(self) -> None:
-        super(LASSO, self).__init__()
+        super(OLS, self).__init__()
         self.ols = LinearRegression()
 
 

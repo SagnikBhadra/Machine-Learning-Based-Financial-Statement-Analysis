@@ -46,7 +46,7 @@ def drop_rows_where_SALEQ_ATQ_missing(dataset):
     return dataset.loc[filt2]
 
 def drop_ticker_less_than_four_datapoints(dataset):
-    dataset =  dataset.groupby('tic').filter(lambda x : len(x)>3)
+    dataset =  dataset.groupby('tic').filter(lambda x : len(x) >= 5)
     return dataset
 
 def imputation_softimpute(dataset):
@@ -116,7 +116,7 @@ def add_target_column(dataset, stock_data):
     return dataset
 
 #Fundamental Data
-#dataset = pd.read_csv('data/fundamental_quarterly.csv', nrows=5)
+#dataset = pd.read_csv('data/fundamental_quarterly.csv')
 #dataset = selecting_most_populated_columns(dataset)
 #dataset.to_csv('data/most_populated_columns.csv', index=False)
 
@@ -129,7 +129,7 @@ def add_target_column(dataset, stock_data):
 #dataset.to_csv('data/rows_SALEQ_ATQ_filled.csv', index=False)
 
 #CRSP data
-#stock_data = pd.read_csv('data/crsp_data.csv', nrows = 20)
+#stock_data = pd.read_csv('data/crsp_data.csv')
 #stock_data = minimize_stock_data_columns(stock_data)
 #stock_data = drop_stock_nan_values(stock_data)
 #stock_data = make_price_positive(stock_data)
@@ -157,6 +157,7 @@ def add_target_column(dataset, stock_data):
 
 #dataset = exclude_quarters_with_no_accouncement_date(dataset)
 #dataset = normalize_data(dataset)
+#dataset.to_csv('data/cleaned_data.csv', index=False)
 
 #print(f'Number of rows: {dataset.shape[0]}, Number of columns: {dataset.shape[1]}')
 
