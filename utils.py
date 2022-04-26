@@ -1,4 +1,5 @@
 import numpy as np
+from numpy import genfromtxt
 from timeit import default_timer as timer
 import matplotlib.pylab as plt 
 import pandas as pd
@@ -42,7 +43,13 @@ def generate_batches(filename, model):
         new_dataset.to_csv('data/batched_train_data.csv', index=False, header=False)
         print(f'Number of rows: {new_dataset.shape[0]}, Number of columns: {new_dataset.shape[1]}')
             
+def change_data_to_float(filename):
+    #data = pd.read_csv(filename, nrows=20).to_numpy()
+    data = genfromtxt(filename, delimiter=',')
+    data = pd.DataFrame(data.astype(np.float32))
+    data.to_csv('data/batched_final_train_data.csv', index=False, header=False)
         
 
-split_train_test_data()
-generate_batches('data/train_data.csv', "DNN")
+#split_train_test_data()
+#generate_batches('data/train_data.csv', "DNN")
+change_data_to_float('data/batched_train_data.csv')

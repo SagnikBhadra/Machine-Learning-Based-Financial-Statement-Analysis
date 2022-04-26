@@ -1,11 +1,11 @@
 Train:
-  batch_size: 128
-  learning_rate: 0.01
+  batch_size: 256
+  learning_rate: 0.00005
   reg: 0
-  epochs: 30
+  epoch: 10
 
 network:
-  model: RNN # DNN or RNN or RandomForest or LASSO or OLS
+  model: DNN # DNN or RNN or RandomForest or LASSO or OLS
 
 
 loss:
