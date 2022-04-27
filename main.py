@@ -164,8 +164,10 @@ def validate(epoch, val_loader, model, criterion):
 
         # update confusion matrix
         _, preds = torch.max(out, 1)
+        """
         for t, p in zip(target.view(-1), preds.view(-1)):
             cm[t.long(), p.long()] += 1
+        """
 
         losses.update(loss, out.shape[0])
         acc.update(batch_acc, out.shape[0])
@@ -175,14 +177,15 @@ def validate(epoch, val_loader, model, criterion):
             print(('Epoch: [{0}][{1}/{2}]\t'
                    'Time {iter_time.val:.3f} ({iter_time.avg:.3f})\t')
                   .format(epoch, idx, len(val_loader), iter_time=iter_time, loss=losses, top1=acc))
-
+    """
     cm = cm / cm.sum(1)
     per_cls_acc = cm.diag().detach().numpy().tolist()
     for i, acc_i in enumerate(per_cls_acc):
         print("Accuracy of Class {}: {:.4f}".format(i, acc_i))
 
     print("* Prec @1: {top1.avg:.4f}".format(top1=acc))
-    return acc.avg, cm
+    """
+    return acc.avg
 
 def main():
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -254,7 +257,8 @@ def main():
             train(epoch, data_loader, model, optimizer, criterion)
 
             #Validate the model
-            acc, cm = validate(epoch, val_loader, model, criterion)
+            acc = validate(epoch, val_loader, model, criterion)
+            print(acc)
     elif args.model == "OLS" or args.model == "LASSO" or args.model == "RandomForest":
         for epoch in range(num_epochs):
             #Train the model
