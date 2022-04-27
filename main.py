@@ -57,8 +57,8 @@ def accuracy(output, target):
     acc = correct / batch_size
 
     return acc
-
-def ML_train(epoch, data_loader, model):
+"""
+def train(epoch, data_loader, model):
     iter_time = AverageMeter()
     losses = AverageMeter()
     acc = AverageMeter()
@@ -80,7 +80,7 @@ def ML_train(epoch, data_loader, model):
                   .format(epoch, idx, len(data_loader), iter_time=iter_time))
 
 
-def ML_validation(epoch, val_loader, model, criterion):
+def validation(epoch, val_loader, model, criterion):
     iter_time = AverageMeter()
     losses = AverageMeter()
     acc = AverageMeter()
@@ -104,8 +104,7 @@ def ML_validation(epoch, val_loader, model, criterion):
                    'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
                    'Prec @1 {top1.val:.4f} ({top1.avg:.4f})\t')
                   .format(epoch, idx, len(val_loader), iter_time=iter_time, loss=losses, top1=acc))
-
-    
+""" 
 
 def train(epoch, data_loader, model, optimizer, criterion):
     iter_time = AverageMeter()
@@ -139,6 +138,8 @@ def train(epoch, data_loader, model, optimizer, criterion):
                    'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
                    'Prec @1 {top1.val:.4f} ({top1.avg:.4f})\t')
                   .format(epoch, idx, len(data_loader), iter_time=iter_time, loss=losses, top1=acc))
+
+    return losses.avg.tolist()
 
 def validate(epoch, val_loader, model, criterion):
     iter_time = AverageMeter()
@@ -175,7 +176,9 @@ def validate(epoch, val_loader, model, criterion):
         iter_time.update(time.time() - start)
         if idx % 10 == 0:
             print(('Epoch: [{0}][{1}/{2}]\t'
-                   'Time {iter_time.val:.3f} ({iter_time.avg:.3f})\t')
+                   'Time {iter_time.val:.3f} ({iter_time.avg:.3f})\t'
+                   'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
+                   'Prec @1 {top1.val:.4f} ({top1.avg:.4f})\t')
                   .format(epoch, idx, len(val_loader), iter_time=iter_time, loss=losses, top1=acc))
     """
     cm = cm / cm.sum(1)
@@ -185,7 +188,7 @@ def validate(epoch, val_loader, model, criterion):
 
     print("* Prec @1: {top1.avg:.4f}".format(top1=acc))
     """
-    return acc.avg
+    return losses.avg.tolist()
 
 def main():
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -205,6 +208,8 @@ def main():
     batch_size = args.batch_size
     train_set_filename = 'data/batched_train_data.csv'
     val_set_filename = 'data/batched_val_data.csv'
+    train_losses = []
+    val_losses = []
 
     #Set up model
     
@@ -254,16 +259,17 @@ def main():
     if args.model == "RNN" or args.model == "DNN":
         for epoch in range(num_epochs):
             #Train the model
-            train(epoch, data_loader, model, optimizer, criterion)
+            train_losses.append(train(epoch, data_loader, model, optimizer, criterion))
 
             #Validate the model
-            acc = validate(epoch, val_loader, model, criterion)
-            print(acc)
+            val_losses.append(validate(epoch, val_loader, model, criterion))
     elif args.model == "OLS" or args.model == "LASSO" or args.model == "RandomForest":
         for epoch in range(num_epochs):
             #Train the model
             ML_train(epoch, data_loader, model)
             ML_validation(epoch, val_loader, model, criterion)
+
+    
             
 
 

@@ -7,6 +7,7 @@ class LASSO():
 
 
     def train(self, x_train, y_train):
+        #history = self.lasso.fit(x_train, y_train, epoch=X, batch_size=Y)
         self.lasso.fit(x_train, y_train)
 
     def test(self, x_test):

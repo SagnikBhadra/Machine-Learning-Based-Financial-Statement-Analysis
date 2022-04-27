@@ -48,6 +48,16 @@ def change_data_to_float(filename):
     data = genfromtxt(filename, delimiter=',')
     data = pd.DataFrame(data.astype(np.float32))
     data.to_csv('data/batched_val_data.csv', index=False, header=False)
+
+def plot_losses(train_losses, val_losses):
+    plt.plot(train_losses)
+    plt.plot(val_losses)
+    plt.title("Losses")
+    plt.ylabel("Loss")
+    plt.xlabel("Epochs")
+    plt.legend(["Train", "Val"])
+    plt.show()
+
         
 
 #split_train_test_data()
