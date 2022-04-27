@@ -47,9 +47,9 @@ def change_data_to_float(filename):
     #data = pd.read_csv(filename, nrows=20).to_numpy()
     data = genfromtxt(filename, delimiter=',')
     data = pd.DataFrame(data.astype(np.float32))
-    data.to_csv('data/batched_final_train_data.csv', index=False, header=False)
+    data.to_csv('data/batched_val_data.csv', index=False, header=False)
         
 
 #split_train_test_data()
 #generate_batches('data/train_data.csv', "DNN")
-change_data_to_float('data/batched_train_data.csv')
+#change_data_to_float('data/batched_val_data.csv')

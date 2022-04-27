@@ -16,9 +16,9 @@ parser.add_argument('--config', default='./configs/config.yaml')
 
 class QuarterlyFundamentalData(Dataset):
     def __init__(self, filename):
-        dataset = np.loadtxt(filename, delimiter=",", skiprows=1)
-        self.x = torch.from_numpy(dataset[:, 1:]) # Skip the column that is the target
-        self.y = torch.from_numpy(dataset[:, [0]]) # Size = (n_samples, 1)
+        dataset = np.loadtxt(filename, delimiter=",")
+        self.x = torch.from_numpy(dataset[:, :484]) # Skip the column that is the target
+        self.y = torch.from_numpy(dataset[:, [484]]) # Size = (n_samples, 1)
         self.num_samples = dataset.shape[0]
 
     def __getitem__(self, index):
@@ -117,7 +117,8 @@ def train(epoch, data_loader, model, optimizer, criterion):
         if torch.cuda.is_available():
             data = data.cuda()
             target = target.cuda()
-
+        data = data.float()
+        target = target.float()
         out = model.forward(data)
         loss = criterion(out, target)
 
@@ -148,9 +149,12 @@ def validate(epoch, val_loader, model, criterion):
     cm = torch.zeros(num_class, num_class)
     for idx, (data, target) in enumerate(val_loader):
         start = time.time()
-        if torch.cuda.is_avaliable():
+        if torch.cuda.is_available():
             data = data.cuda()
             target = target.cuda()
+
+        data = data.float()
+        target = target.float()
 
         with torch.no_grad():
             out = model.forward(data)
