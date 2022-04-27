@@ -10,6 +10,7 @@ import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 
 import models.dnn, models.rnn, models.random_regression_forest, models.LASSO, models.OLS
+from utils import calculate_error_per_epsilon, plot_losses
 
 parser = argparse.ArgumentParser(description='Machine Learning-Based Financial Statement Analysis')
 parser.add_argument('--config', default='./configs/config.yaml')

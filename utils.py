@@ -58,6 +58,23 @@ def plot_losses(train_losses, val_losses):
     plt.legend(["Train", "Val"])
     plt.show()
 
+
+def calculate_error_per_epsilon(losses, BHAR):
+  data = pd.merge(losses, BHAR, how="outer")
+  filt_005 = (data['BHAR'] > 0.05)
+  filt_010 = (data['BHAR'] > 0.10)
+  filt_020 = (data['BHAR'] > 0.20)
+  filt_050 = (data['BHAR'] > 0.50)
+  filt_100 = (data['BHAR'] > 1)
+
+  data_005 = data.loc[filt_005]["Loss"].mean()
+  data_010 = data.loc[filt_010]["Loss"].mean()
+  data_020 = data.loc[filt_020]["Loss"].mean()
+  data_050 = data.loc[filt_050]["Loss"].mean()
+  data_100 = data.loc[filt_100]["Loss"].mean()
+
+  print(f'0.05 Error: {data_005}\n 0.10 Error: {data_010}\n 0.20 Error: {data_020}\n 0.50 Error: {data_050}\n 1.00 Error: {data_100}\n')
+
         
 
 #split_train_test_data()
