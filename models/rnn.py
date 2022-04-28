@@ -21,19 +21,25 @@ class RNN(nn.Module):
         self.num_layers = 4
         self.hidden_size = 20
         self.num_classes = 1
-        self.rnn = nn.GRU(self.input_size, self.hidden_size, self.num_layers, batch_first = True)
+        
+        self.rnn = nn.GRU(self.input_size, self.hidden_size, self.num_layers, batch_first=True)
+       
         # x -> (batch_size, sequence_size, input_size)
         self.linear_layer = nn.Linear(self.hidden_size, self.num_classes)
 
     def forward(self, x):
-        initial_hidden_state = torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(self.device)
 
-        out, _ = self.rnn(self, initial_hidden_state)
-        # out: batch_size, sequence_length, hidden_size
+        # initialize hidden state
 
-        #out: (batch_size, hidden_size)
+        hidden_initial = torch.zeros(self.num_layers, 1,  self.hidden_size).to(self.device)
+
+        out, _ = self.rnn(x, hidden_initial)
+
+        # take last hidden state
         out = out[:, -1, :]
+
+        # send through linear layer
         out = self.linear_layer(out)
 
-        return out
+        return out[0][0]
 
