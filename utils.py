@@ -75,6 +75,11 @@ def calculate_error_per_epsilon(losses, BHAR):
 
   print(f'0.05 Error: {data_005}\n 0.10 Error: {data_010}\n 0.20 Error: {data_020}\n 0.50 Error: {data_050}\n 1.00 Error: {data_100}\n')
 
+def percentage_correct(losses, BHAR):
+  data = pd.merge(losses, BHAR, how="outer")
+  filt = ((data['BHAR'] > 0  and data['Loss'] > 0) or (data['BHAR'] < 0  and data['Loss'] < 0))
+  filt = pd.DataFrame(filt, columns=['Percentage Correct'])
+  print(f'Percentage_correct: {filt["Percentage Correct"].value_counts(normalize=True)}')
         
 
 #split_train_test_data()
