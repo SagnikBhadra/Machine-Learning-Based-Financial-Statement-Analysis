@@ -281,8 +281,12 @@ def main():
 
     if args.model == "RandomForest":
         data_columns = pd.read_csv('data/train_data.csv', nrows=1).columns
+        data_columns = list(data_columns.drop(['tic', 'datadate', 'PRC', 'BHAR']))
         all_columns = data_columns + data_columns + data_columns + data_columns
-        plt.barh(all_columns, model.random_forest_fitted.feature_importances_)
+        sorted_idx = model.random_forest_fitted.feature_importances_.argsort()[-10:]
+
+        print(f'Sorted Index: {sorted_idx}, All Columns: {np.array(all_columns)[sorted_idx.astype(int)]}, RF Features: {np.array(model.random_forest_fitted.feature_importances_)[sorted_idx.astype(int)]}')
+        plt.barh(np.array(all_columns)[sorted_idx.astype(int)], np.array(model.random_forest_fitted.feature_importances_)[sorted_idx.astype(int)])
 
 
     
