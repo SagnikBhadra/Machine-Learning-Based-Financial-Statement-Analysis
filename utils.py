@@ -60,26 +60,32 @@ def plot_losses(train_losses, val_losses):
 
 
 def calculate_error_per_epsilon(losses, BHAR):
-  data = pd.merge(losses, BHAR, how="outer")
-  filt_005 = (data['BHAR'] > 0.05)
-  filt_010 = (data['BHAR'] > 0.10)
-  filt_020 = (data['BHAR'] > 0.20)
-  filt_050 = (data['BHAR'] > 0.50)
-  filt_100 = (data['BHAR'] > 1)
+    data = pd.merge(losses, BHAR, how="outer", left_index=True, right_index = True)
+    filt_000 = (data['BHAR'].abs() > 0) & (data['BHAR'].abs() <= 0.05)
+    filt_005 = (data['BHAR'].abs() > 0.05) & (data['BHAR'].abs() <= 0.10)
+    filt_010 = (data['BHAR'].abs() > 0.10) & (data['BHAR'].abs() <= 0.20)
+    filt_020 = (data['BHAR'].abs() > 0.20) & (data['BHAR'].abs() <= 0.50)
+    filt_050 = (data['BHAR'].abs() > 0.50) & (data['BHAR'].abs() <= 1)
+    filt_100 = (data['BHAR'].abs() > 1)
 
-  data_005 = data.loc[filt_005]["Loss"].mean()
-  data_010 = data.loc[filt_010]["Loss"].mean()
-  data_020 = data.loc[filt_020]["Loss"].mean()
-  data_050 = data.loc[filt_050]["Loss"].mean()
-  data_100 = data.loc[filt_100]["Loss"].mean()
+    print(f'0 Error: {data.loc[filt_000].shape}\n 0.05 Error: {data.loc[filt_005].shape}\n 0.10 Error: {data.loc[filt_010].shape}\n 0.20 Error: {data.loc[filt_020].shape}\n 0.50 Error: {data.loc[filt_050].shape}\n 1.00 Error: {data.loc[filt_100].shape}\n')
 
-  print(f'0.05 Error: {data_005}\n 0.10 Error: {data_010}\n 0.20 Error: {data_020}\n 0.50 Error: {data_050}\n 1.00 Error: {data_100}\n')
 
-def percentage_correct(losses, BHAR):
-  data = pd.merge(losses, BHAR, how="outer")
-  filt = ((data['BHAR'] > 0  and data['Loss'] > 0) or (data['BHAR'] < 0  and data['Loss'] < 0))
-  filt = pd.DataFrame(filt, columns=['Percentage Correct'])
-  print(f'Percentage_correct: {filt["Percentage Correct"].value_counts(normalize=True)}')
+    data_000 = data.loc[filt_000]["Loss"].mean()
+    data_005 = data.loc[filt_005]["Loss"].mean()
+    data_010 = data.loc[filt_010]["Loss"].mean()
+    data_020 = data.loc[filt_020]["Loss"].mean()
+    data_050 = data.loc[filt_050]["Loss"].mean()
+    data_100 = data.loc[filt_100]["Loss"].mean()
+    
+    print(f'0 Error: {data_000}\n 0.05 Error: {data_005}\n 0.10 Error: {data_010}\n 0.20 Error: {data_020}\n 0.50 Error: {data_050}\n 1.00 Error: {data_100}\n')
+
+def percentage_correct(outs, BHAR):
+    data = pd.merge(outs, BHAR, how="outer", left_index=True, right_index = True)
+    filt = ((data['BHAR'] > 0)  & (data['Out'] > 0) | (data['BHAR'] < 0)  & (data['Out'] < 0))
+    filt = pd.DataFrame(filt, columns=['Percentage Correct'])
+    print(f'Percentage_correct: {filt["Percentage Correct"].value_counts(normalize=True)}')
+    return filt
         
 
 #split_train_test_data()
