@@ -8,6 +8,7 @@ import pandas as pd
 import torch
 import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
+import matplotlib.pylab as plt 
 
 import models.dnn, models.rnn, models.random_regression_forest, models.LASSO, models.OLS
 from utils import calculate_error_per_epsilon, plot_losses, percentage_correct
@@ -76,19 +77,21 @@ def ML_train(epoch, data_loader, model):
         iter_time.update(time.time() - start)
 
 
-def ML_validation(epoch, val_loader, model, criterion):
+def ML_validation(epoch, val_loader, model, criterion, percentage_correct_criterion):
     iter_time = AverageMeter()
     losses = AverageMeter()
     acc = AverageMeter()
+    all_losses = []
 
     for idx, (data, target) in enumerate(val_loader):
         start = time.time()
         data = data.cpu().float().numpy()
         target = target.float()
 
-        out = torch.tensor(model.test(data)).unsqueeze(1)
+        out = torch.tensor(model.test(data))#.unsqueeze(1)
         loss = criterion(out, target)
 
+        all_losses.append(percentage_correct_criterion(out, target))
         batch_acc = accuracy(out, target)
 
         losses.update(loss, out.shape[0])
@@ -103,8 +106,8 @@ def ML_validation(epoch, val_loader, model, criterion):
                    'Prec @1 {top1.val:.4f} ({top1.avg:.4f})\t')
                   .format(epoch, idx, len(val_loader), iter_time=iter_time, loss=losses, top1=acc))
 
-    return losses.avg.tolist()
-
+    return all_losses, losses.avg.tolist()
+    
 
 def train(epoch, data_loader, model, optimizer, criterion):
     iter_time = AverageMeter()
@@ -138,13 +141,14 @@ def train(epoch, data_loader, model, optimizer, criterion):
                    'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
                    'Prec @1 {top1.val:.4f} ({top1.avg:.4f})\t')
                   .format(epoch, idx, len(data_loader), iter_time=iter_time, loss=losses, top1=acc))
-
+        
     return losses.avg.tolist()
 
-def validate(epoch, val_loader, model, criterion):
+def validate(epoch, val_loader, model, criterion, percentage_correct_criterion):
     iter_time = AverageMeter()
     losses = AverageMeter()
     acc = AverageMeter()
+    all_losses = []
 
     num_class = 1
     cm = torch.zeros(num_class, num_class)
@@ -153,23 +157,17 @@ def validate(epoch, val_loader, model, criterion):
         if torch.cuda.is_available():
             data = data.cuda()
             target = target.cuda()
-
         data = data.float()
         target = target.float()
 
         with torch.no_grad():
             out = model.forward(data)
             loss = criterion(out, target)
-
+        all_losses.append(percentage_correct_criterion(out, target))
         batch_acc = accuracy(out, target)
 
         # update confusion matrix
         _, preds = torch.max(out, 1)
-        """
-        for t, p in zip(target.view(-1), preds.view(-1)):
-            cm[t.long(), p.long()] += 1
-        """
-
         losses.update(loss, out.shape[0])
         acc.update(batch_acc, out.shape[0])
 
@@ -180,15 +178,8 @@ def validate(epoch, val_loader, model, criterion):
                    'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
                    'Prec @1 {top1.val:.4f} ({top1.avg:.4f})\t')
                   .format(epoch, idx, len(val_loader), iter_time=iter_time, loss=losses, top1=acc))
-    """
-    cm = cm / cm.sum(1)
-    per_cls_acc = cm.diag().detach().numpy().tolist()
-    for i, acc_i in enumerate(per_cls_acc):
-        print("Accuracy of Class {}: {:.4f}".format(i, acc_i))
-
-    print("* Prec @1: {top1.avg:.4f}".format(top1=acc))
-    """
-    return losses.avg.tolist()
+    
+    return all_losses, losses.avg.tolist()
 
 def main():
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -210,6 +201,11 @@ def main():
     val_set_filename = 'data/batched_val_data.csv'
     train_losses = []
     val_losses = []
+    val_all_losses = []
+    val_percentage_correct = []
+
+    val_dataset = np.loadtxt(val_set_filename, delimiter=",")
+    val_target = torch.from_numpy(val_dataset[:, [484]]) 
 
     #Set up model
     
@@ -244,17 +240,16 @@ def main():
     #Initialize loss and optimizer
     if args.loss_type == 'MSE':
         criterion = nn.MSELoss()
+        percentage_correct_criterion = nn.MSELoss(reduction='none')
     elif args.loss_type == 'MAE':
         criterion = nn.L1Loss()
+        percentage_correct_criterion = nn.L1Loss(reduction='none')
 
     if args.optimizer_type == 'Adam':
         optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate) 
     elif args.optimizer_type == 'RMSProp':
         optimizer = torch.optim.RMSProp(model.parameters(), lr=args.learning_rate) 
 
-    best = 0.0
-    best_cm = None
-    best_model = None
 
     if args.model == "RNN" or args.model == "DNN":
         for epoch in range(num_epochs):
@@ -262,11 +257,37 @@ def main():
             train_losses.append(train(epoch, data_loader, model, optimizer, criterion))
 
             #Validate the model
-            val_losses.append(validate(epoch, val_loader, model, criterion))
+            val_all_losses, tmp = validate(epoch, val_loader, model, criterion, percentage_correct_criterion)
+            val_losses.append(tmp)
+
+            plot_losses(train_losses, val_losses)
+
+
     elif args.model == "OLS" or args.model == "LASSO" or args.model == "RandomForest":
         #Train the model
         ML_train(epoch, data_loader, model)
-        val_losses.append(ML_validation(epoch, val_loader, model, criterion))
+        val_all_losses, tmp = ML_validation(epoch, val_loader, model, criterion, percentage_correct_criterion)
+        val_losses.append(tmp)
+
+    BHAR = pd.DataFrame(val_target.tolist(), columns=["BHAR"])
+    losses = [item for sublist in val_all_losses for item in sublist]
+    val_all_losses = pd.DataFrame(losses, columns=["Loss"])
+
+    val_all_outs = [item for sublist in val_all_outs for item in sublist]
+    val_all_outs = pd.DataFrame(val_all_outs, columns=["Out"])
+
+    calculate_error_per_epsilon(val_all_losses, BHAR)
+    percentage_correct(val_all_losses, BHAR)
+
+    if args.model == "RandomForest":
+        data_columns = pd.read_csv('data/train_data.csv', nrows=1).columns
+        data_columns = list(data_columns.drop(['tic', 'datadate', 'PRC', 'BHAR']))
+        all_columns = data_columns + data_columns + data_columns + data_columns
+        sorted_idx = model.random_forest_fitted.feature_importances_.argsort()[-10:]
+
+        print(f'Sorted Index: {sorted_idx}, All Columns: {np.array(all_columns)[sorted_idx.astype(int)]}, RF Features: {np.array(model.random_forest_fitted.feature_importances_)[sorted_idx.astype(int)]}')
+        plt.barh(np.array(all_columns)[sorted_idx.astype(int)], np.array(model.random_forest_fitted.feature_importances_)[sorted_idx.astype(int)])
+
 
     
             
