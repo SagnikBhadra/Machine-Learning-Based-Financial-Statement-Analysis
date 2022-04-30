@@ -60,13 +60,16 @@ class RNN_Dataset(Dataset):
 
 
 
-def main():
+def train(
+	lr=.001,
+	num_epochs=5,
+	batch_size=128,
+):
 
-	# learning rate
-	lr = .005
-	num_epochs = 5
-	batch_size = 5
-	train_path = './data/rnn_train_data_test.npy'#'./data/rnn_train.npy'
+	print()
+
+	# paths
+	train_path = './data/rnn_train.npy'
 	val_path = './data/rnn_val.npy'
 
 	# get device
@@ -76,13 +79,18 @@ def main():
 	model = models.rnn.RNN(device=device).to(device)
 
 	# define loss and optimizer
-	criterion = nn.MSELoss()
-	optimizer = torch.optim.Adam(model.parameters(), lr=lr) 
+	criterion = nn.MSELoss(reduction='sum')
+	optimizer = torch.optim.RMSprop(model.parameters(), lr=lr) 
 
 
 	# create datasets
+	print('Loading Train Data...')
 	train_dataset = RNN_Dataset(train_path)
 	train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+
+	print('Loading Validation Data...')
+	val_dataset = RNN_Dataset(val_path)
+	val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=True)
 
 
 	# train loop
@@ -90,15 +98,14 @@ def main():
 
 	for epoch in range(num_epochs):
 
-		print(f'Epoch {epoch}')
+		print('-----------------------------')
+		print(f'Epoch {epoch+1}')
 		print('# Batches:', len(train_dataloader))
 
 		train_loss = 0
+		model.train()
 
 		for batch, (x_sequence, y_sequence) in enumerate(train_dataloader):
-
-			if batch and batch % 1000 == 0:
-				print(batch)
 
 			# forward pass
 			out = model.forward(x_sequence)
@@ -118,11 +125,74 @@ def main():
 			with torch.no_grad():
 				train_loss += loss.numpy()
 
-		print('Training Loss:', train_loss)
+		with torch.no_grad():
+			train_loss /= len(train_dataset)
+
+		print('Training Loss:', round(train_loss,4))
 		train_losses.append(train_loss)
+
+
+		# compute val loss
+		model.eval()
+		val_loss = 0
+		with torch.no_grad():
+			for batch, (x_sequence, y_sequence) in enumerate(val_dataloader):
+				out = model.forward(x_sequence)
+				loss = 	criterion(out, y_sequence)
+				val_loss += loss.numpy()
+			val_loss /= len(val_dataset)
+			print('Validation Loss:', round(val_loss,4))
+
+	# save model
+	torch.save(model.state_dict(), './trained_models/rnn_model_rmse.pt')
+
+
+def validate():
+
+	# paths
+	model_path = './trained_models/rnn_model_mse_loss.pt'
+	train_path = './data/rnn_train.npy'
+	val_path = './data/rnn_val.npy'
+
+	# get device
+	device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+	# load
+	model = models.rnn.RNN(device=device).to(device)
+	model.load_state_dict(torch.load(model_path))
+	model.eval()
+
+
+	# create datasets
+	#print('Loading Train Data...')
+	#train_dataset = RNN_Dataset(train_path)
+	#train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+
+	print('Loading Validation Data...')
+	val_dataset = RNN_Dataset(val_path)
+	val_dataloader = DataLoader(val_dataset, batch_size=len(val_dataset), shuffle=True)
+
+	with torch.no_grad():
+		for batch, (x_sequence, y_sequence) in enumerate(val_dataloader):
+
+			out = model.forward(x_sequence)
+
+			# evaluate metrics
+			mse = nn.MSELoss()(y_sequence, out)
+			rmse = torch.sqrt(mse)
+			mae = nn.L1Loss()(y_sequence, out)
+			medae = torch.median(nn.L1Loss(reduction='none')(y_sequence, out))
+
+		print('MSE:', mse.numpy())
+		print('RMSE:', rmse.numpy())
+		print('MAE:', mae.numpy())
+		print('MedAE:', medae.numpy())
+
+
 	
 	
 if __name__ == '__main__':
 
-	main()
+	#train()
+	validate()
 

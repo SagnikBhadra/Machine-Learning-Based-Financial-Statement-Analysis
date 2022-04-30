@@ -4,21 +4,10 @@ import torch.nn as nn
 class RNN(nn.Module):
     def __init__(self, device):
         super(RNN, self).__init__()
-
-        #input size = 121
-        #Use Gated Recurrent Unit (GRU)
-        #Initialize h and n to 0s
-        #Hidden state dim = 20
-        #Stacking GRU cells = 10?
-        #Hidden state of the top most GRU is linked to a FCL
-        #RMSProp optimizer
-        #Learning rate = 0.001
-        #Epochs = 5
-        #Batch size = 128
-        
+      
         self.device = device
         self.input_size = 121
-        self.num_layers = 4
+        self.num_layers = 10
         self.hidden_size = 20
         self.output_size = 1
 
@@ -34,7 +23,6 @@ class RNN(nn.Module):
         hidden_initial = torch.zeros(self.num_layers, x.shape[0],  self.hidden_size).to(self.device)
 
         out, _ = self.rnn(x, hidden_initial)
-
 
         # take last hidden state
         out = out[:, -1, :]
