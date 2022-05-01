@@ -24,7 +24,6 @@ class DNN(nn.Module):
         self.ELUActivation = nn.ELU()
 
     def forward(self, x):
-        print(type(x[0][0]))
         z1 = self.LinearLayer1(x)
         bn1 = self.BN1(z1)
         a1 = self.ELUActivation(bn1)
