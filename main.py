@@ -288,11 +288,10 @@ def main():
         print(f'Sorted Index: {sorted_idx}, All Columns: {np.array(all_columns)[sorted_idx.astype(int)]}, RF Features: {np.array(model.random_forest_fitted.feature_importances_)[sorted_idx.astype(int)]}')
         plt.barh(np.array(all_columns)[sorted_idx.astype(int)], np.array(model.random_forest_fitted.feature_importances_)[sorted_idx.astype(int)])
 
-
-    
-            
-
-
+        plt.title("Important Features")
+        plt.ylabel("Features")
+        plt.xlabel("Feature Importance")
+        plt.show()
 
 if __name__ == "__main__":
     main()
