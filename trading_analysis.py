@@ -118,12 +118,21 @@ def trading_analysis():
 	model_dnn.eval()
 	models_list.append(model_dnn)
 
-	#model_path = './trained_models_sagnik/lasso_model_mse.sav'
-	#model = pickle.load(open(model_path, 'rb'))
-	#print(model)
-	#exit()
+	model_path = './trained_models_sagnik/lasso_model_mse.sav'
+	model = pickle.load(open(model_path, 'rb'))
+	models_list.append(model)
+
+	model_path = './trained_models_sagnik/ols_model_mse.sav'
+	model = pickle.load(open(model_path, 'rb'))
+	models_list.append(model)
 
 
+	model_path = './trained_models_sagnik/random_forest_model_mse.sav'
+	model = pickle.load(open(model_path, 'rb'))
+	models_list.append(model)
+
+
+	labels = ['RNN', 'DNN', 'Lasso', 'OLS', 'Random Forest']
 
 	for i, model in enumerate(models_list):
 
@@ -153,12 +162,13 @@ def trading_analysis():
 
 					sorted_x = [str(k)[:6] for k,v in sorted(model_return_dict.items())]
 					sorted_y = [v for k,v in sorted(model_return_dict.items())]
-					plt.plot(sorted_x, np.cumsum(sorted_y))
+					plt.plot(sorted_x, np.cumsum(sorted_y), label='RNN')
 		elif i == 1:
 
 			# dnn
 			y_pred = model(torch.from_numpy(x_other.astype(np.float32))).flatten().detach().numpy()
-			y_truth = y_pred.copy()
+			print(y_pred)
+			y_truth = y_other.copy()
 
 			pos_mask = y_pred*y_other > 0
 			y_truth[pos_mask] = np.abs(y_truth[pos_mask])
@@ -174,12 +184,43 @@ def trading_analysis():
 
 			sorted_x = [str(k)[:6] for k,v in sorted(model_return_dict.items())]
 			sorted_y = [v for k,v in sorted(model_return_dict.items())]
-			plt.plot(sorted_x, np.cumsum(sorted_y))
+			plt.plot(sorted_x, np.cumsum(sorted_y), label='DNN')
+		else:
+		
 
-			
+			y_pred = model.predict(x_other).flatten()	
+			print(y_pred)
+			y_truth = y_other.copy()
+		
+	
+			pos_mask = y_pred*y_other > 0
+
+
+			y_truth[pos_mask] = np.abs(y_truth[pos_mask])
+			y_truth[~pos_mask] = -np.abs(y_truth[~pos_mask])
+
+
+			for val, date in zip(y_truth, dates):
+				date_mod = date[:6]
+
+				if int(date_mod) in model_return_dict:
+					model_return_dict[int(date_mod)] += val
+				else:
+					model_return_dict[int(date_mod)] = val
+
+
+			sorted_x = [str(k)[:6] for k,v in sorted(model_return_dict.items())]
+			sorted_y = [v for k,v in sorted(model_return_dict.items())]
+		
+			plt.plot(sorted_x, np.cumsum(sorted_y), label=labels[i])
 
 
 
+	plt.title('Trading Analysis - Quarterly Returns')
+	plt.ylabel('Profit')
+	plt.xlabel('Date')
+	plt.xticks(['199701', '201711'], ['January 1997', 'November 2017'])
+	plt.legend()
 	plt.show()
 
 
